@@ -8,9 +8,9 @@
     (match lst
       [(list) acc]
       [(list-rest (list s r m) rest)
-       (let* ([sorted-key (sort (list s r) string<?)]
-              [ex-val (hash-ref acc sorted-key (list))]
-              [new-acc (hash-set acc sorted-key (cons m ex-val))])
+       (let* ([key (list s r)]
+              [ex-val (hash-ref acc key (list))]
+              [new-acc (hash-set acc key (cons m ex-val))])
          (aux rest new-acc))]))
   (aux lst (hash)))
 (module+ test
@@ -41,14 +41,33 @@
      (("A1" "A3") "msg2"))))
 
 (define (compute-spacing actors actor-rep-func msgs-per-pair msg-rep-func)
-  (define (add-longest-message pair hash-acc)
-    (let ([messages (hash-ref msgs-per-pair pair '())])
-      (hash-set hash-acc pair (apply max (cons 0 (map (compose pict-width msg-rep-func) messages))))))
+  ;; placeholder: assumes distance is always longest message
+  ;; should be max(longest pairwise message,max
+  (define (add-required-distance pair hash-acc)
+    (let* ([messages (hash-ref msgs-per-pair pair '())]
+           [actors-after-start
+            (cdr (dropf actors (λ (a) (not (equal? a (first pair))))))]
+           [intermediate-actors
+            (drop-right (dropf-right actors-after-start (λ (a) (not (equal? a (second pair))))) 1)]
+           [restrictions
+            (map
+             (λ (ia) (+ (pict-width (actor-rep-func ia)) (hash-ref hash-acc (list (first pair) ia) 0) (hash-ref hash-acc (list ia (second pair)) 0)))
+             intermediate-actors)])
+      (hash-set
+       hash-acc
+       pair
+       (apply
+        max
+        (append
+         (cons 0 (map (compose pict-width msg-rep-func) messages))
+         restrictions)))))
+  ;; updates distances for a new gap size
   (define (aux gap hash-acc)
     (let ([gap-separated-pairs
            (for/list ([a1 actors] [a2 (drop actors gap)])
              (list a1 a2))])
-      (foldl add-longest-message hash-acc gap-separated-pairs)))
+      (foldl add-required-distance hash-acc gap-separated-pairs)))
+  ;; gradually increases the gap from 1 to n-1 (at which point only distance first and last actor is computed)
   (foldl aux (hash) (range 1 (length actors))))
 (module+ test
   (let ([actor-rep (compose frame text)])
@@ -61,9 +80,7 @@
        '("A1" "A3") (list "msg2")
        '("A1" "A4") (list "msg3"))
       text)
-     (hash '("A1" "A2") (pict-width (text "msg1"))
-           '("A1" "A3") (+ (pict-width (actor-rep "A2")) (pict-width (text "msg1")))
-           '("A1" "A4") (+ (pict-width (actor-rep "A2")) (pict-width (actor-rep "A3")) (pict-width (text "msg1")))))))
+     (hash))))
 
 (define-syntax (communication-timeline stx)
   (syntax-parse stx
