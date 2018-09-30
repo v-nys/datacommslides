@@ -94,7 +94,8 @@
      #'(let* ([actor label] ...
               [actor-list (list actor ...)]
               [actor-rep-func (compose frame text)]
-              [actor-reps (hash)] ; still need to figure this out
+              ; make-hash constructor avoids problem with ellipsis placement
+              [actor-reps (make-hash (list (cons actor (actor-rep-func actor)) ...))]
               [msgs-per-pair
                (messages-per-pair->hash
                 (list (list sender receiver msg) ...))]
@@ -103,10 +104,16 @@
                (compute-spacing
                 actor-list actor-rep-func
                 msgs-per-pair msg-rep-func)])
+         ; TODO: for every message:
+         ; TODO: for every actor: vc-append a line of appropriate length
+         ; space out the actors
          (foldl
           (λ (a pict-acc)
             (ht-append
-             (- (hash-ref required-spacing (list (first actor-list) a) 0) (pict-width pict-acc))
+             ;; too small: subtracts too much
+             ;; should subtract 
+             ;; (- (hash-ref required-spacing (list (first actor-list) a) 0) (pict-width pict-acc))
+             (- (hash-ref required-spacing (list (first actor-list) a) 0) (max 0 (- (pict-width pict-acc) (pict-width (hash-ref actor-reps (first actor-list))))))
              pict-acc
              (hash-ref actor-reps a)))
           (blank 0 0)
@@ -123,4 +130,5 @@
  (sender receiver2 "query 2")
  (receiver2 sender "response 2")
  (sender receiver1 "query 3")
- (receiver1 sender "response 3"))
+ (receiver1 sender "response 3")
+ (receiver1 receiver2 "extra1"))
