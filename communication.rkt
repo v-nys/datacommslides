@@ -80,7 +80,12 @@
        '("A1" "A3") (list "msg2")
        '("A1" "A4") (list "msg3"))
       text)
-     (hash))))
+     #hash((("A3" "A4") . 0)
+           (("A1" "A3") . 49.037109375)
+           (("A2" "A3") . 0)
+           (("A1" "A2") . 33.193359375)
+           (("A1" "A4") . 64.880859375)
+           (("A2" "A4") . 15.84375)))))
 
 (define-syntax (communication-timeline stx)
   (syntax-parse stx
@@ -89,6 +94,7 @@
      #'(let* ([actor label] ...
               [actor-list (list actor ...)]
               [actor-rep-func (compose frame text)]
+              [actor-reps (hash)] ; still need to figure this out
               [msgs-per-pair
                (messages-per-pair->hash
                 (list (list sender receiver msg) ...))]
@@ -97,7 +103,14 @@
                (compute-spacing
                 actor-list actor-rep-func
                 msgs-per-pair msg-rep-func)])
-         (displayln "not implemented yet"))]))
+         (foldl
+          (λ (a pict-acc)
+            (ht-append
+             (- (hash-ref required-spacing (list (first actor-list) a) 0) (pict-width pict-acc))
+             pict-acc
+             (hash-ref actor-reps a)))
+          (blank 0 0)
+          actor-list))]))
 
 (communication-timeline
  ; first: actors, groups of identifier and label
