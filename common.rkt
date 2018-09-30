@@ -38,6 +38,7 @@
 (define warning-color (make-parameter owl-red))
 (define link-color (make-parameter owl-cyan))
 (define accent-color (make-parameter owl-yellow))
+(define example-color (make-parameter owl-blue))
 (define tip-color (make-parameter owl-green))
 (provide warning-color link-color accent-color)
 
@@ -105,6 +106,7 @@
   @{Draws the supplied arguments @racket[e ...] inside a box indicating a question.}))
 
 ;; text formatting functions
+(define (highlight text) (colorize (t text) (accent-color)))
 (define emph it)
 (define work it)
 (define (term tm) ; TODO: derive a list of terms per presentation from this
@@ -112,7 +114,7 @@
 (define (placeholder p)
   (colorize (t p) (link-color)))
 (define (nbtt str) (text str 'modern (current-font-size)))
-(provide emph work term placeholder nbtt)
+(provide emph work term placeholder nbtt highlight)
 
 ;; generally useful functionality
 (define standard-m (t "m"))
