@@ -6,7 +6,7 @@ Dit is een test voor markdown.
 * list elem 2
 * list elem 3
 
-!!! danger "Pas op"
+!!! danger:: "Pas op"
     Er zijn al admonitions voorzien.
 
     1. er is er een voor danger
